@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>味觉轩 · 餐厅菜单</title>
+    <style>
+        :root {
+            --bg: #faf7f2;
+            --card-bg: #ffffff;
+            --text: #3d3d3d;
+            --text-light: #7a7a7a;
+            --accent: #c59a5e;
+            --accent-dark: #a0783c;
+            --border: #e8e0d5;
+            --tag-bg: #f5efe6;
+            --shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c2416 0%, #3d3322 50%, #4a3d28 100%);
+            color: #fff; text-align: center; padding: 60px 24px 48px;
+            position: relative; overflow: hidden;
+        }
+        .header::before {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 70%, rgba(197, 154, 94, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 30%, rgba(197, 154, 94, 0.1) 0%, transparent 50%);
+            animation: headerShimmer 8s ease-in-out infinite alternate;
+        }
+        @keyframes headerShimmer {
+            0% { transform: translate(0, 0); } 100% { transform: translate(-20px, 10px); }
+        }
+        .header-content { position: relative; z-index: 1; }
+        .restaurant-name {
+            font-size: clamp(2rem, 5vw, 3rem); font-weight: 700;
+            letter-spacing: 0.08em; margin-bottom: 8px;
+        }
+        .restaurant-name span { color: var(--accent); }
+        .restaurant-tagline {
+            font-size: 1.05rem; color: rgba(255,255,255,0.65);
+            letter-spacing: 0.15em; font-weight: 300;
+        }
+        .header-divider {
+            width: 60px; height: 2px; background: var(--accent);
+            margin: 18px auto; border-radius: 1px;
+        }
+        .restaurant-info {
+            display: flex; justify-content: center; gap: 32px;
+            flex-wrap: wrap; font-size: 0.92rem; color: rgba(255,255,255,0.55);
+        }
+        .restaurant-info span { display: flex; align-items: center; gap: 6px; }
+        .category-nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border); padding: 0 24px;
+        }
+        .category-list {
+            display: flex; justify-content: center; gap: 4px;
+            list-style: none; overflow-x: auto;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .category-list::-webkit-scrollbar { display: none; }
+        .category-btn {
+            background: none; border: none; padding: 16px 20px;
+            font-size: 0.95rem; cursor: pointer; color: var(--text-light);
+            font-family: inherit; font-weight: 500; white-space: nowrap;
+            position: relative; transition: color 0.2s;
+        }
+        .category-btn::after {
+            content: ""; position: absolute; bottom: 0; left: 50%;
+            transform: translateX(-50%); width: 0; height: 2px;
+            background: var(--accent); border-radius: 1px; transition: width 0.25s;
+        }
+        .category-btn:hover { color: var(--text); }
+        .category-btn.active { color: var(--accent-dark); font-weight: 600; }
+        .category-btn.active::after { width: 60%; }
+        .category-emoji { margin-right: 4px; font-size: 1.1em; }
+        .main { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+        .menu-section { margin-bottom: 48px; scroll-margin-top: 80px; }
+        .section-title {
+            font-size: 1.5rem; font-weight: 700; color: var(--text);
+            margin-bottom: 6px; display: flex; align-items: center; gap: 10px;
+        }
+        .section-subtitle {
+            font-size: 0.9rem; color: var(--text-light);
+            margin-bottom: 24px; font-weight: 400;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .menu-item {
+            background: var(--card-bg); border-radius: var(--radius);
+            padding: 24px; box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+        .menu-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        .menu-item.recommended::before {
+            content: "推荐"; position: absolute; top: 12px; right: -28px;
+            background: var(--accent); color: #fff; font-size: 0.72rem;
+            padding: 3px 32px; transform: rotate(45deg);
+            font-weight: 600; letter-spacing: 0.05em; z-index: 1;
+        }
+        .item-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; gap: 12px; margin-bottom: 8px;
+        }
+        .item-name { font-size: 1.1rem; font-weight: 600; color: var(--text); flex: 1; }
+        .item-price {
+            font-size: 1.15rem; font-weight: 700;
+            color: var(--accent-dark); white-space: nowrap;
+        }
+        .item-price .unit { font-size: 0.75rem; font-weight: 500; color: var(--text-light); }
+        .item-desc {
+            font-size: 0.88rem; color: var(--text-light);
+            margin-bottom: 12px; flex: 1;
+        }
+        .item-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+        .item-tag {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;
+            background: var(--tag-bg); color: var(--text-light);
+            font-weight: 500; border: 1px solid var(--border);
+        }
+        .item-tag.spicy { color: #d4695a; background: #fdf0ee; border-color: #f5d5cf; }
+        .item-tag.veggie { color: #5a9e6f; background: #eef5f0; border-color: #c8dfce; }
+        .item-tag.popular { color: #c59a5e; background: #faf5ee; border-color: #ead9c0; }
+        .footer {
+            text-align: center; padding: 40px 24px;
+            color: var(--text-light); font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            max-width: 960px; margin: 0 auto;
+        }
+        .footer strong { color: var(--accent-dark); }
+        @media (max-width: 640px) {
+            .header { padding: 40px 20px 32px; }
+            .menu-grid { grid-template-columns: 1fr; }
+            .category-btn { padding: 12px 14px; font-size: 0.85rem; }
+            .restaurant-info { gap: 16px; font-size: 0.82rem; }
+        }
+        @media print {
+            .category-nav { display: none; }
+            .menu-item { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+            body { background: #fff; }
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+    <div class="header-content">
+        <h1 class="restaurant-name">味觉<span>轩</span></h1>
+        <p class="restaurant-tagline">— 匠心烹饪 · 品味生活 —</p>
+        <div class="header-divider"></div>
+        <div class="restaurant-info">
+            <span>📍 朝阳区美食街88号</span>
+            <span>📞 010-8888-6666</span>
+            <span>🕐 每日 10:00 - 22:00</span>
+        </div>
+    </div>
+</header>
+<nav class="category-nav">
+    <ul class="category-list">
+        <li><button class="category-btn active" data-category="all"><span class="category-emoji">📋</span>全部</button></li>
+        <li><button class="category-btn" data-category="appetizer"><span class="category-emoji">🥗</span>開胃前菜</button></li>
+        <li><button class="category-btn" data-category="main"><span class="category-emoji">🍖</span>主厨精选</button></li>
+        <li><button class="category-btn" data-category="soup"><span class="category-emoji">🍲</span>汤羹炖品</button></li>
+        <li><button class="category-btn" data-category="dessert"><span class="category-emoji">🍰</span>甜品点心</button></li>
+        <li><button class="category-btn" data-category="drink"><span class="category-emoji">🍹</span>酒水饮品</button></li>
+    </ul>
+</nav>
+<main class="main">
+    <section class="menu-section" data-category="appetizer">
+        <h2 class="section-title">🥗 开胃前菜</h2>
+        <p class="section-subtitle">精选时令食材，唤醒您的味蕾</p>
+        <div class="menu-grid">
+            <div class="menu-item recommended">
+                <div class="item-header"><h3 class="item-name">蒜泥白肉</h3><span class="item-price"><span class="unit">¥</span>38</span></div>
+                <p class="item-desc">薄切五花肉搭配秘制蒜泥酱汁，肥而不腻，蒜香浓郁</p>
+                <div class="item-tags"><span class="item-tag popular">🔥 人气必点</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">凉拌木耳</h3><span class="item-price"><span class="unit">¥</span>22</span></div>
+                <p class="item-desc">东北野生木耳，搭配陈醋、香油、蒜蓉，清脆爽口</p>
+                <div class="item-tags"><span class="item-tag veggie">🌿 素食</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">口水鸡</h3><span class="item-price"><span class="unit">¥</span>42</span></div>
+                <p class="item-desc">嫩滑鸡腿肉淋上红油辣椒酱，麻辣鲜香，回味无穷</p>
+                <div class="item-tags"><span class="item-tag spicy">🌶 麻辣</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">皮蛋豆腐</h3><span class="item-price"><span class="unit">¥</span>18</span></div>
+                <p class="item-desc">嫩滑内酯豆腐搭配松花蛋，浇上秘制酱汁，清淡爽口</p>
+                <div class="item-tags"><span class="item-tag veggie">🌿 素食</span></div>
+            </div>
+        </div>
+    </section>
+    <section class="menu-section" data-category="main">
+        <h2 class="section-title">🍖 主厨精选</h2>
+        <p class="section-subtitle">招牌硬菜，款待心中最重要的人</p>
+        <div class="menu-grid">
+            <div class="menu-item recommended">
+                <div class="item-header"><h3 class="item-name">招牌红烧肉</h3><span class="item-price"><span class="unit">¥</span>68</span></div>
+                <p class="item-desc">精选五花三层，慢炖两小时，入口即化，酱香浓郁</p>
+                <div class="item-tags"><span class="item-tag popular">🔥 招牌必点</span></div>
+            </div>
+            <div class="menu-item recommended">
+                <div class="item-header"><h3 class="item-name">水煮鱼片</h3><span class="item-price"><span class="unit">¥</span>78</span></div>
+                <p class="item-desc">鲜活草鱼片搭配豆芽、辣椒，热油浇淋，鲜嫩麻辣</p>
+                <div class="item-tags"><span class="item-tag spicy">🌶 麻辣</span><span class="item-tag popular">🔥 人气必点</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">宫保虾球</h3><span class="item-price"><span class="unit">¥</span>88</span></div>
+                <p class="item-desc">大颗鲜虾仁搭配花生米，宫保酱汁酸甜微辣，口感弹牙</p>
+                <div class="item-tags"><span class="item-tag spicy">🌶 微辣</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">黑椒牛柳</h3><span class="item-price"><span class="unit">¥</span>72</span></div>
+                <p class="item-desc">澳洲牛里脊切条，配上现磨黑胡椒和彩椒，嫩滑多汁</p>
+                <div class="item-tags"><span class="item-tag popular">🔥 人气必点</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">糖醋里脊</h3><span class="item-price"><span class="unit">¥</span>48</span></div>
+                <p class="item-desc">外酥里嫩的猪里脊，裹上酸甜适口的糖醋汁，老少皆宜</p>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">干锅花菜</h3><span class="item-price"><span class="unit">¥</span>32</span></div>
+                <p class="item-desc">有机花菜配五花肉片，干锅慢煸，香气四溢</p>
+                <div class="item-tags"><span class="item-tag spicy">🌶 微辣</span></div>
+            </div>
+        </div>
+    </section>
+    <section class="menu-section" data-category="soup">
+        <h2 class="section-title">🍲 汤羹炖品</h2>
+        <p class="section-subtitle">慢火细炖，每一口都是精华</p>
+        <div class="menu-grid">
+            <div class="menu-item recommended">
+                <div class="item-header"><h3 class="item-name">老火靓汤</h3><span class="item-price"><span class="unit">¥</span>36</span></div>
+                <p class="item-desc">当日现煲，猪骨、鸡脚、玉米文火慢炖四小时</p>
+                <div class="item-tags"><span class="item-tag popular">🔥 每日限量</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">酸辣汤</h3><span class="item-price"><span class="unit">¥</span>22</span></div>
+                <p class="item-desc">豆腐丝、木耳丝、鸡蛋花，酸辣开胃，暖心暖胃</p>
+                <div class="item-tags"><span class="item-tag spicy">🌶 酸辣</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">菌菇鸡汤</h3><span class="item-price"><span class="unit">¥</span>58</span></div>
+                <p class="item-desc">散养土鸡配松茸、竹荪等多种菌菇，汤色金黄，鲜美至极</p>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">番茄蛋花汤</h3><span class="item-price"><span class="unit">¥</span>16</span></div>
+                <p class="item-desc">经典家常味道，熟透番茄搭配嫩滑蛋花，酸甜可口</p>
+                <div class="item-tags"><span class="item-tag veggie">🌿 素食</span></div>
+            </div>
+        </div>
+    </section>
+    <section class="menu-section" data-category="dessert">
+        <h2 class="section-title">🍰 甜品点心</h2>
+        <p class="section-subtitle">甜蜜收尾，为这餐画上完美句号</p>
+        <div class="menu-grid">
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">芒果椰汁西米露</h3><span class="item-price"><span class="unit">¥</span>28</span></div>
+                <p class="item-desc">新鲜芒果配浓郁椰浆，西米Q弹，冰凉甜蜜</p>
+                <div class="item-tags"><span class="item-tag popular">🔥 人气必点</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">红豆双皮奶</h3><span class="item-price"><span class="unit">¥</span>22</span></div>
+                <p class="item-desc">顺德传统做法，奶香浓郁，搭配蜜红豆，细腻嫩滑</p>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">桂花糯米藕</h3><span class="item-price"><span class="unit">¥</span>26</span></div>
+                <p class="item-desc">莲藕酿入糯米，淋上桂花蜜汁，软糯香甜</p>
+                <div class="item-tags"><span class="item-tag veggie">🌿 素食</span></div>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">榴莲酥</h3><span class="item-price"><span class="unit">¥</span>32</span></div>
+                <p class="item-desc">金黄酥皮包裹纯正榴莲果肉，外酥里嫩，榴莲控最爱</p>
+            </div>
+        </div>
+    </section>
+    <section class="menu-section" data-category="drink">
+        <h2 class="section-title">🍹 酒水饮品</h2>
+        <p class="section-subtitle">佐餐佳酿，相得益彰</p>
+        <div class="menu-grid">
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">自制酸梅汤</h3><span class="item-price"><span class="unit">¥</span>12</span></div>
+                <p class="item-desc">乌梅、山楂、桂花、冰糖熬制，冰镇后酸甜解腻</p>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">鲜榨果汁</h3><span class="item-price"><span class="unit">¥</span>22</span></div>
+                <p class="item-desc">橙汁 / 西瓜汁 / 雪梨汁，当季鲜果现榨</p>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">青岛啤酒</h3><span class="item-price"><span class="unit">¥</span>16</span></div>
+                <p class="item-desc">经典青岛纯生，冰镇爽口，佐餐首选</p>
+            </div>
+            <div class="menu-item">
+                <div class="item-header"><h3 class="item-name">陈年花雕</h3><span class="item-price"><span class="unit">¥</span>98</span></div>
+                <p class="item-desc">绍兴十年陈花雕酒，温饮更佳，醇厚绵长</p>
+            </div>
+        </div>
+    </section>
+</main>
+<footer class="footer">
+    <p>📍 <strong>味觉轩</strong> · 朝阳区美食街88号 · 订餐电话 010-8888-6666</p>
+    <p style="margin-top:6px;">营业时间 10:00-22:00 · 人均 ¥80-120 · 包间可预订</p>
+</footer>
+<script>
+    const buttons = document.querySelectorAll(".category-btn");
+    const sections = document.querySelectorAll(".menu-section");
+    buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            buttons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const category = btn.dataset.category;
+            sections.forEach(section => {
+                if (category === "all" || section.dataset.category === category) {
+                    section.style.display = "";
+                    section.style.opacity = "0";
+                    section.style.transform = "translateY(8px)";
+                    section.style.transition = "opacity 0.35s ease, transform 0.35s ease";
+                    requestAnimationFrame(() => {
+                        section.style.opacity = "1";
+                        section.style.transform = "translateY(0)";
+                    });
+                } else {
+                    section.style.display = "none";
+                }
+            });
+        });
+    });
+    buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const category = btn.dataset.category;
+            if (category === "all") {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+            const target = document.querySelector('[data-category="' + category + '"]');
+            if (target) target.scrollIntoView({ behavior: "smooth" });
+        });
+    });
+</script>
+</body>
+</html>
